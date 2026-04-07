@@ -1,0 +1,1909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luxe Garments - Admin Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --red: #C41230;
+            --navy: #0A1628;
+            --navy-light: #1a2a42;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --white: #ffffff;
+            --green: #059669;
+            --yellow: #d97706;
+            --blue: #2563eb;
+            --sidebar-w: 240px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4 { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
+
+        /* LOGIN SCREEN */
+        .login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: var(--navy);
+        }
+
+        .login-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 48px 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .login-card h1 {
+            font-size: 32px;
+            color: var(--navy);
+            text-align: center;
+            margin-bottom: 4px;
+        }
+
+        .login-card .subtitle {
+            text-align: center;
+            color: var(--gray-500);
+            font-size: 14px;
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 6px;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.2s;
+            background: var(--white);
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--red);
+            box-shadow: 0 0 0 3px rgba(196, 18, 48, 0.1);
+        }
+
+        .form-group textarea { resize: vertical; min-height: 80px; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--red);
+            color: var(--white);
+        }
+        .btn-primary:hover { background: #a8102a; }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+        .btn-secondary:hover { background: var(--gray-300); }
+
+        .btn-danger {
+            background: #dc2626;
+            color: var(--white);
+        }
+        .btn-danger:hover { background: #b91c1c; }
+
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+        .btn-full { width: 100%; }
+
+        .login-error {
+            color: var(--red);
+            font-size: 13px;
+            text-align: center;
+            margin-top: 12px;
+            display: none;
+        }
+
+        /* LAYOUT */
+        .admin-layout {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-w);
+            height: 100vh;
+            background: var(--navy);
+            color: var(--white);
+            padding: 0;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-header h2 {
+            font-size: 22px;
+            color: var(--white);
+        }
+
+        .sidebar-header .admin-badge {
+            font-size: 11px;
+            font-family: 'Inter', sans-serif;
+            background: var(--red);
+            color: var(--white);
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 4px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-list {
+            list-style: none;
+            padding: 16px 0;
+        }
+
+        .nav-list li a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--gray-400);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-list li a:hover, .nav-list li a.active {
+            color: var(--white);
+            background: rgba(255,255,255,0.05);
+            border-left-color: var(--red);
+        }
+
+        .nav-list li a .icon {
+            width: 20px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 16px 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-footer .user-info {
+            font-size: 13px;
+            color: var(--gray-400);
+            margin-bottom: 8px;
+        }
+
+        .sidebar-footer .logout-btn {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: var(--gray-400);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            width: 100%;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .sidebar-footer .logout-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--white);
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-w);
+            padding: 32px;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            margin-bottom: 28px;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            color: var(--navy);
+        }
+
+        .page-header p {
+            color: var(--gray-500);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        /* SECTION VISIBILITY */
+        .section { display: none; }
+        .section.active { display: block; }
+
+        /* DASHBOARD CARDS */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid var(--gray-200);
+        }
+
+        .stat-card .stat-label {
+            font-size: 13px;
+            color: var(--gray-500);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .stat-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 36px;
+            color: var(--navy);
+            margin-top: 4px;
+            line-height: 1.1;
+        }
+
+        .stat-card .stat-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        /* TABLES */
+        .table-container {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-200);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .table-header h3 {
+            font-size: 20px;
+            color: var(--navy);
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            padding: 8px 14px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            min-width: 200px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--red);
+        }
+
+        .filter-select {
+            padding: 8px 14px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            background: var(--white);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--gray-200);
+            background: var(--gray-50);
+        }
+
+        tbody td {
+            padding: 12px 16px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--gray-100);
+            vertical-align: middle;
+        }
+
+        tbody tr:hover { background: var(--gray-50); }
+
+        .product-thumb {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 6px;
+            background: var(--gray-200);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-active { background: #d1fae5; color: #065f46; }
+        .badge-inactive { background: #fee2e2; color: #991b1b; }
+        .badge-inactive { background: #fee2e2; color: #991b1b; }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-confirmed { background: #dbeafe; color: #1e40af; }
+        .badge-shipped { background: #e0e7ff; color: #3730a3; }
+        .badge-delivered { background: #d1fae5; color: #065f46; }
+        .badge-cancelled { background: #fee2e2; color: #991b1b; }
+
+        .actions-cell {
+            display: flex;
+            gap: 6px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            padding: 5px 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover { background: var(--gray-100); }
+        .icon-btn.edit:hover { border-color: var(--blue); color: var(--blue); }
+        .icon-btn.delete:hover { border-color: #dc2626; color: #dc2626; }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--white);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 640px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .modal-header h3 {
+            font-size: 22px;
+            color: var(--navy);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--gray-400);
+            padding: 4px;
+        }
+
+        .modal-close:hover { color: var(--gray-700); }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 16px 24px;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* ORDER DETAIL */
+        .order-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .detail-card {
+            background: var(--gray-50);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .detail-card h4 {
+            font-size: 16px;
+            color: var(--navy);
+            margin-bottom: 12px;
+        }
+
+        .detail-card p {
+            font-size: 13px;
+            color: var(--gray-600);
+            margin-bottom: 4px;
+        }
+
+        .order-items-list {
+            margin-top: 16px;
+        }
+
+        .order-item-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 13px;
+        }
+
+        .order-item-row img {
+            width: 48px;
+            height: 48px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .order-item-info { flex: 1; }
+        .order-item-info .name { font-weight: 600; }
+        .order-item-info .meta { color: var(--gray-500); font-size: 12px; }
+
+        /* CATEGORY LIST */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .category-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid var(--gray-200);
+        }
+
+        .category-card h3 {
+            font-size: 20px;
+            color: var(--navy);
+            margin-bottom: 12px;
+        }
+
+        .subcategory-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 13px;
+        }
+
+        .subcategory-item:last-child { border-bottom: none; }
+
+        .subcategory-count {
+            background: var(--gray-100);
+            padding: 2px 10px;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gray-600);
+        }
+
+        /* LOADING / TOAST */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray-500);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--navy);
+            color: var(--white);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 300;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .toast.success { background: var(--green); }
+        .toast.error { background: #dc2626; }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .sidebar { width: 60px; }
+            .sidebar .nav-list li a span { display: none; }
+            .sidebar-header h2 { display: none; }
+            .sidebar-header .admin-badge { display: none; }
+            .sidebar-footer .user-info { display: none; }
+            .sidebar-footer .logout-btn { font-size: 11px; padding: 6px; }
+            .main-content { margin-left: 60px; padding: 16px; }
+            .form-row { grid-template-columns: 1fr; }
+            .order-detail-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="login-screen">
+    <div class="login-card">
+        <h1>LUXE GARMENTS</h1>
+        <p class="subtitle">Admin Panel</p>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" value="admin@luxegarments.com" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" value="admin123" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+            <p id="loginError" class="login-error"></p>
+        </form>
+    </div>
+</div>
+
+<!-- ADMIN LAYOUT -->
+<div id="adminLayout" class="admin-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>LUXE GARMENTS</h2>
+            <div class="admin-badge">ADMIN</div>
+        </div>
+        <ul class="nav-list">
+            <li><a href="#" data-section="dashboard" class="active"><span class="icon">&#9632;</span> <span>Dashboard</span></a></li>
+            <li><a href="#" data-section="products"><span class="icon">&#9830;</span> <span>Products</span></a></li>
+            <li><a href="#" data-section="categories"><span class="icon">&#9776;</span> <span>Categories</span></a></li>
+            <li><a href="#" data-section="orders"><span class="icon">&#9993;</span> <span>Orders</span></a></li>
+            <li><a href="#" data-section="promotions"><span class="icon">&#127915;</span> <span>Promotions</span></a></li>
+            <li><a href="#" data-section="content"><span class="icon">&#9998;</span> <span>Content CMS</span></a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <div class="user-info" id="adminEmail"></div>
+            <button class="logout-btn" onclick="logout()">Sign Out</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <!-- DASHBOARD -->
+        <div id="sectionDashboard" class="section active">
+            <div class="page-header">
+                <h1>Dashboard</h1>
+                <p>Overview of your store</p>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">&#128722;</div>
+                    <div class="stat-label">Total Products</div>
+                    <div class="stat-value" id="statProducts">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">&#128230;</div>
+                    <div class="stat-label">Total Orders</div>
+                    <div class="stat-value" id="statOrders">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">&#128176;</div>
+                    <div class="stat-label">Total Revenue</div>
+                    <div class="stat-value" id="statRevenue">--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PRODUCTS -->
+        <div id="sectionProducts" class="section">
+            <div class="page-header">
+                <h1>Products</h1>
+                <p>Manage your product catalog</p>
+            </div>
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>All Products</h3>
+                    <div class="table-actions">
+                        <input type="text" class="search-input" id="productSearch" placeholder="Search products...">
+                        <select class="filter-select" id="productCategoryFilter">
+                            <option value="">All Categories</option>
+                        </select>
+                        <button class="btn btn-primary btn-sm" onclick="openProductModal()">+ Add Product</button>
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Image</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Subcategory</th>
+                                <th>Price</th>
+                                <th>Badge</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <tr><td colspan="9" class="loading">Loading products...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- CATEGORIES -->
+        <div id="sectionCategories" class="section">
+            <div class="page-header">
+                <h1>Categories</h1>
+                <p>View product categories and subcategories</p>
+            </div>
+            <div class="category-grid" id="categoriesGrid">
+                <div class="loading">Loading categories...</div>
+            </div>
+        </div>
+
+        <!-- ORDERS -->
+        <div id="sectionOrders" class="section">
+            <div class="page-header">
+                <h1>Orders</h1>
+                <p>Manage customer orders</p>
+            </div>
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>All Orders</h3>
+                    <div class="table-actions">
+                        <select class="filter-select" id="orderStatusFilter">
+                            <option value="">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="shipped">Shipped</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Status</th>
+                                <th>Total</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody">
+                            <tr><td colspan="6" class="loading">Loading orders...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTENT CMS -->
+        <div id="sectionContent" class="section">
+            <div class="page-header">
+                <h1>Content CMS</h1>
+                <p>Manage homepage content slots — hero banner, categories, collections, and more</p>
+            </div>
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Content Slots</h3>
+                    <div class="table-actions">
+                        <select class="filter-select" id="contentTypeFilter">
+                            <option value="">All Types</option>
+                            <option value="hero">Hero</option>
+                            <option value="promo_bar">Promo Bar</option>
+                            <option value="banner">Banner</option>
+                            <option value="category_tile">Category Tile</option>
+                            <option value="collection_card">Collection Card</option>
+                            <option value="text">Text</option>
+                        </select>
+                        <button class="btn btn-primary btn-sm" onclick="openContentModal()">+ Add Slot</button>
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Slot Key</th>
+                                <th>Type</th>
+                                <th>Title</th>
+                                <th>Image</th>
+                                <th>CTA</th>
+                                <th>Order</th>
+                                <th>Status</th>
+                                <th>Updated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="contentTableBody">
+                            <tr><td colspan="9" class="loading">Loading content slots...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- PROMOTIONS -->
+        <div id="sectionPromotions" class="section">
+            <div class="page-header">
+                <h1>Promotions</h1>
+                <p>Manage promo codes and discounts</p>
+            </div>
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>All Promotions</h3>
+                    <div class="table-actions">
+                        <button class="btn btn-primary btn-sm" onclick="openPromoModal()">+ Add Promotion</button>
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Type</th>
+                                <th>Value</th>
+                                <th>Min Order</th>
+                                <th>Max Discount</th>
+                                <th>Usage</th>
+                                <th>Status</th>
+                                <th>Dates</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="promosTableBody">
+                            <tr><td colspan="9" class="loading">Loading promotions...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- CONTENT SLOT MODAL -->
+<div class="modal-overlay" id="contentModal">
+    <div class="modal" style="max-width:640px;">
+        <div class="modal-header">
+            <h3 id="contentModalTitle">Edit Content Slot</h3>
+            <button class="modal-close" onclick="closeContentModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="contentForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Slot Key *</label>
+                        <input type="text" id="cms_slot_key" placeholder="e.g. hero_banner" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Type *</label>
+                        <select id="cms_slot_type" required>
+                            <option value="hero">Hero</option>
+                            <option value="promo_bar">Promo Bar</option>
+                            <option value="banner">Banner</option>
+                            <option value="category_tile">Category Tile</option>
+                            <option value="collection_card">Collection Card</option>
+                            <option value="text">Text</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" id="cms_title" placeholder="Headline text">
+                    </div>
+                    <div class="form-group">
+                        <label>Badge Text</label>
+                        <input type="text" id="cms_badge_text" placeholder="e.g. Spring / Summer 2026">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Subtitle</label>
+                    <input type="text" id="cms_subtitle" placeholder="Short description">
+                </div>
+                <div class="form-group">
+                    <label>Body Text</label>
+                    <textarea id="cms_body_text" rows="3" placeholder="Longer description or paragraph"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Image URL</label>
+                    <input type="text" id="cms_image_url" placeholder="https://...">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>CTA Button Text</label>
+                        <input type="text" id="cms_link_text" placeholder="e.g. SHOP NOW">
+                    </div>
+                    <div class="form-group">
+                        <label>CTA Action</label>
+                        <input type="text" id="cms_link_action" placeholder="e.g. showCategory('men')">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Display Order</label>
+                        <input type="number" id="cms_display_order" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Active</label>
+                        <select id="cms_active">
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Extra Metadata (JSON)</label>
+                    <textarea id="cms_metadata" rows="2" placeholder='{"secondary_link_text":"SHOP WOMEN"}'></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeContentModal()">Cancel</button>
+            <button class="btn btn-primary" id="contentSubmitBtn" onclick="submitContent()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- PROMOTION MODAL -->
+<div class="modal-overlay" id="promoModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="promoModalTitle">Add Promotion</h3>
+            <button class="modal-close" onclick="closePromoModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="promoForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Promo Code *</label>
+                        <input type="text" id="promo_code" placeholder="e.g. SUMMER25" style="text-transform:uppercase" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Discount Type *</label>
+                        <select id="promo_type" required>
+                            <option value="percentage">Percentage (%)</option>
+                            <option value="fixed">Fixed Amount ($)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Discount Value *</label>
+                        <input type="number" id="promo_value" step="0.01" required placeholder="e.g. 25">
+                    </div>
+                    <div class="form-group">
+                        <label>Max Discount ($)</label>
+                        <input type="number" id="promo_max_discount" step="0.01" placeholder="Cap for % discounts">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Min Order Value ($)</label>
+                        <input type="number" id="promo_min_order" step="0.01" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Usage Limit</label>
+                        <input type="number" id="promo_usage_limit" placeholder="0 = unlimited" value="0">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Per-User Limit</label>
+                        <input type="number" id="promo_per_user" placeholder="0 = unlimited" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Active</label>
+                        <select id="promo_active">
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" id="promo_start">
+                    </div>
+                    <div class="form-group">
+                        <label>End Date</label>
+                        <input type="date" id="promo_end">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Applicable Categories (comma-separated slugs)</label>
+                    <input type="text" id="promo_categories" placeholder="e.g. jeans, jackets">
+                </div>
+                <div class="form-group">
+                    <label>Applicable Products (comma-separated IDs)</label>
+                    <input type="text" id="promo_products" placeholder="e.g. m-j-01, w-j-05">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closePromoModal()">Cancel</button>
+            <button class="btn btn-primary" id="promoSubmitBtn" onclick="submitPromo()">Create Promotion</button>
+        </div>
+    </div>
+</div>
+
+<!-- PRODUCT MODAL -->
+<div class="modal-overlay" id="productModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="productModalTitle">Add Product</h3>
+            <button class="modal-close" onclick="closeProductModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="productForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Product ID *</label>
+                        <input type="text" id="pf_id" placeholder="e.g. m-j-11" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Name *</label>
+                        <input type="text" id="pf_name" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Subtitle</label>
+                    <input type="text" id="pf_subtitle">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Price *</label>
+                        <input type="number" id="pf_price" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Original Price</label>
+                        <input type="number" id="pf_original_price" step="0.01">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Image URL</label>
+                    <input type="url" id="pf_image_url" placeholder="https://...">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Colors (comma-separated hex)</label>
+                        <input type="text" id="pf_colors" placeholder="#1B3A5C, #2C2C2C">
+                    </div>
+                    <div class="form-group">
+                        <label>Sizes (comma-separated)</label>
+                        <input type="text" id="pf_sizes" placeholder="S, M, L, XL">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Badge</label>
+                        <select id="pf_badge">
+                            <option value="">None</option>
+                            <option value="New">New</option>
+                            <option value="Bestseller">Bestseller</option>
+                            <option value="Trending">Trending</option>
+                            <option value="Premium">Premium</option>
+                            <option value="Icon">Icon</option>
+                            <option value="Sale">Sale</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Category *</label>
+                        <select id="pf_category" required>
+                            <option value="">Select...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Subcategory *</label>
+                    <select id="pf_subcategory" required>
+                        <option value="">Select category first...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Details (one per line)</label>
+                    <textarea id="pf_details" rows="4" placeholder="100% Cotton&#10;Machine washable&#10;Classic fit"></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeProductModal()">Cancel</button>
+            <button class="btn btn-primary" id="productSubmitBtn" onclick="submitProduct()">Create Product</button>
+        </div>
+    </div>
+</div>
+
+<!-- ORDER DETAIL MODAL -->
+<div class="modal-overlay" id="orderModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Order Details</h3>
+            <button class="modal-close" onclick="closeOrderModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="orderDetailBody">
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+    // --- STATE ---
+    let token = null;
+    let currentUser = null;
+    let allProducts = [];
+    let allOrders = [];
+    let categoriesData = [];
+    let editingProductId = null;
+
+    const API = '';  // same origin
+
+    // --- AUTH ---
+    function authHeaders() {
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        const errEl = document.getElementById('loginError');
+        errEl.style.display = 'none';
+
+        try {
+            const resp = await fetch(`${API}/api/users/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.detail || 'Login failed');
+            if (data.user.role !== 'admin') throw new Error('Access denied. Admin role required.');
+
+            token = data.access_token;
+            currentUser = data.user;
+            showAdmin();
+        } catch (err) {
+            errEl.textContent = err.message;
+            errEl.style.display = 'block';
+        }
+    });
+
+    function showAdmin() {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('adminLayout').style.display = 'block';
+        document.getElementById('adminEmail').textContent = currentUser.email;
+        loadDashboard();
+        loadCategories();
+    }
+
+    function logout() {
+        token = null;
+        currentUser = null;
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('adminLayout').style.display = 'none';
+    }
+
+    // --- NAVIGATION ---
+    document.querySelectorAll('.nav-list a').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const section = link.dataset.section;
+            document.querySelectorAll('.nav-list a').forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById('section' + capitalize(section)).classList.add('active');
+
+            if (section === 'dashboard') loadDashboard();
+            if (section === 'products') loadProducts();
+            if (section === 'categories') loadCategories();
+            if (section === 'orders') loadOrders();
+            if (section === 'promotions') loadPromotions();
+            if (section === 'content') loadContent();
+        });
+    });
+
+    function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+    // --- TOAST ---
+    function showToast(msg, type = 'success') {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast ' + type;
+        t.style.display = 'block';
+        setTimeout(() => { t.style.display = 'none'; }, 3000);
+    }
+
+    // --- DASHBOARD ---
+    async function loadDashboard() {
+        try {
+            const [prodResp, orderResp] = await Promise.all([
+                fetch(`${API}/api/products/?limit=1`, { headers: authHeaders() }),
+                fetch(`${API}/api/orders/admin/all?limit=1`, { headers: authHeaders() })
+            ]);
+            const prodData = await prodResp.json();
+            const orderData = await orderResp.json();
+
+            document.getElementById('statProducts').textContent = prodData.total || 0;
+            document.getElementById('statOrders').textContent = orderData.total || 0;
+
+            // Load all orders to compute revenue
+            const allOrdersResp = await fetch(`${API}/api/orders/admin/all?limit=100`, { headers: authHeaders() });
+            const allOrdersData = await allOrdersResp.json();
+            const revenue = (allOrdersData.orders || [])
+                .filter(o => o.status !== 'cancelled')
+                .reduce((sum, o) => sum + o.total, 0);
+            document.getElementById('statRevenue').textContent = '$' + revenue.toFixed(2);
+        } catch (err) {
+            console.error('Dashboard load error:', err);
+        }
+    }
+
+    // --- PRODUCTS ---
+    async function loadProducts() {
+        const tbody = document.getElementById('productsTableBody');
+        tbody.innerHTML = '<tr><td colspan="9" class="loading">Loading...</td></tr>';
+
+        try {
+            const search = document.getElementById('productSearch').value;
+            const category = document.getElementById('productCategoryFilter').value;
+            let url = `${API}/api/products/?limit=100`;
+            if (search) url += `&search=${encodeURIComponent(search)}`;
+            if (category) url += `&category=${encodeURIComponent(category)}`;
+
+            const resp = await fetch(url, { headers: authHeaders() });
+            const data = await resp.json();
+            allProducts = data.products || [];
+            renderProductsTable();
+        } catch (err) {
+            tbody.innerHTML = '<tr><td colspan="9" class="loading">Error loading products</td></tr>';
+        }
+    }
+
+    function renderProductsTable() {
+        const tbody = document.getElementById('productsTableBody');
+        if (allProducts.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="loading">No products found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = allProducts.map(p => `
+            <tr>
+                <td><code style="font-size:12px">${esc(p.id)}</code></td>
+                <td><img class="product-thumb" src="${esc(p.image_url)}" alt="" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><rect fill=%22%23e5e7eb%22 width=%2240%22 height=%2240%22/></svg>'"></td>
+                <td><strong>${esc(p.name)}</strong><br><span style="font-size:11px;color:var(--gray-500)">${esc(p.subtitle || '')}</span></td>
+                <td>${esc(p.category)}</td>
+                <td>${esc(p.subcategory)}</td>
+                <td>$${Number(p.price).toFixed(2)}</td>
+                <td>${p.badge ? `<span class="badge badge-active">${esc(p.badge)}</span>` : '-'}</td>
+                <td><span class="badge badge-active">Active</span></td>
+                <td class="actions-cell">
+                    <button class="icon-btn edit" onclick="editProduct('${esc(p.id)}')" title="Edit">&#9998;</button>
+                    <button class="icon-btn delete" onclick="deleteProduct('${esc(p.id)}')" title="Delete">&#10006;</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function esc(str) {
+        if (!str) return '';
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+
+    document.getElementById('productSearch').addEventListener('input', debounce(loadProducts, 400));
+    document.getElementById('productCategoryFilter').addEventListener('change', loadProducts);
+
+    function debounce(fn, ms) {
+        let timer;
+        return function(...args) {
+            clearTimeout(timer);
+            timer = setTimeout(() => fn.apply(this, args), ms);
+        };
+    }
+
+    // --- PRODUCT MODAL ---
+    function openProductModal(product = null) {
+        editingProductId = product ? product.id : null;
+        document.getElementById('productModalTitle').textContent = product ? 'Edit Product' : 'Add Product';
+        document.getElementById('productSubmitBtn').textContent = product ? 'Update Product' : 'Create Product';
+        document.getElementById('pf_id').value = product ? product.id : '';
+        document.getElementById('pf_id').disabled = !!product;
+        document.getElementById('pf_name').value = product ? product.name : '';
+        document.getElementById('pf_subtitle').value = product ? (product.subtitle || '') : '';
+        document.getElementById('pf_price').value = product ? product.price : '';
+        document.getElementById('pf_original_price').value = product ? (product.original_price || '') : '';
+        document.getElementById('pf_image_url').value = product ? (product.image_url || '') : '';
+        document.getElementById('pf_colors').value = product ? (product.colors || []).join(', ') : '';
+        document.getElementById('pf_sizes').value = product ? (product.sizes || []).join(', ') : '';
+        document.getElementById('pf_badge').value = product ? (product.badge || '') : '';
+        document.getElementById('pf_details').value = product ? (product.details || []).join('\n') : '';
+
+        // Set category and subcategory
+        if (product && product.category) {
+            document.getElementById('pf_category').value = product.category;
+            updateSubcategoryOptions(product.category);
+            setTimeout(() => {
+                document.getElementById('pf_subcategory').value = product.subcategory || '';
+            }, 50);
+        } else {
+            document.getElementById('pf_category').value = '';
+            document.getElementById('pf_subcategory').innerHTML = '<option value="">Select category first...</option>';
+        }
+
+        document.getElementById('productModal').classList.add('active');
+    }
+
+    function closeProductModal() {
+        document.getElementById('productModal').classList.remove('active');
+        editingProductId = null;
+    }
+
+    async function editProduct(id) {
+        try {
+            const resp = await fetch(`${API}/api/products/${id}`, { headers: authHeaders() });
+            if (!resp.ok) throw new Error('Product not found');
+            const product = await resp.json();
+            openProductModal(product);
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    }
+
+    async function deleteProduct(id) {
+        if (!confirm(`Are you sure you want to delete product "${id}"? This will deactivate the product.`)) return;
+        try {
+            const resp = await fetch(`${API}/api/products/${id}`, {
+                method: 'DELETE',
+                headers: authHeaders()
+            });
+            if (!resp.ok) {
+                const data = await resp.json();
+                throw new Error(data.detail || 'Delete failed');
+            }
+            showToast('Product deactivated successfully');
+            loadProducts();
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    }
+
+    async function submitProduct() {
+        const colors = document.getElementById('pf_colors').value
+            .split(',').map(c => c.trim()).filter(c => c);
+        const sizes = document.getElementById('pf_sizes').value
+            .split(',').map(s => s.trim()).filter(s => s);
+        const details = document.getElementById('pf_details').value
+            .split('\n').map(d => d.trim()).filter(d => d);
+
+        const payload = {
+            name: document.getElementById('pf_name').value,
+            subtitle: document.getElementById('pf_subtitle').value,
+            price: parseFloat(document.getElementById('pf_price').value),
+            original_price: document.getElementById('pf_original_price').value ? parseFloat(document.getElementById('pf_original_price').value) : null,
+            image_url: document.getElementById('pf_image_url').value,
+            colors,
+            sizes,
+            badge: document.getElementById('pf_badge').value || null,
+            details,
+            category: document.getElementById('pf_category').value,
+            subcategory: document.getElementById('pf_subcategory').value,
+        };
+
+        try {
+            let resp;
+            if (editingProductId) {
+                resp = await fetch(`${API}/api/products/${editingProductId}`, {
+                    method: 'PUT',
+                    headers: authHeaders(),
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                payload.id = document.getElementById('pf_id').value;
+                resp = await fetch(`${API}/api/products/`, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify(payload)
+                });
+            }
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.detail || 'Save failed');
+
+            showToast(editingProductId ? 'Product updated' : 'Product created');
+            closeProductModal();
+            loadProducts();
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    }
+
+    // --- CATEGORIES ---
+    async function loadCategories() {
+        try {
+            const resp = await fetch(`${API}/api/products/categories`, { headers: authHeaders() });
+            categoriesData = await resp.json();
+            renderCategories();
+            populateCategoryDropdowns();
+        } catch (err) {
+            document.getElementById('categoriesGrid').innerHTML = '<div class="loading">Error loading categories</div>';
+        }
+    }
+
+    function renderCategories() {
+        const grid = document.getElementById('categoriesGrid');
+        if (!categoriesData.length) {
+            grid.innerHTML = '<div class="loading">No categories found</div>';
+            return;
+        }
+        grid.innerHTML = categoriesData.map(cat => `
+            <div class="category-card">
+                <h3>${esc(cat.name)} <span style="font-size:14px;color:var(--gray-400);font-family:Inter">(${esc(cat.slug)})</span></h3>
+                ${cat.subcategories.map(sub => `
+                    <div class="subcategory-item">
+                        <span>${esc(sub.display_name)} <span style="color:var(--gray-400)">(${esc(sub.slug)})</span></span>
+                        <span class="subcategory-count">${sub.product_count} products</span>
+                    </div>
+                `).join('')}
+            </div>
+        `).join('');
+    }
+
+    function populateCategoryDropdowns() {
+        const catSelect = document.getElementById('pf_category');
+        const filterSelect = document.getElementById('productCategoryFilter');
+
+        // Keep first option, clear rest
+        catSelect.innerHTML = '<option value="">Select...</option>';
+        filterSelect.innerHTML = '<option value="">All Categories</option>';
+
+        categoriesData.forEach(cat => {
+            catSelect.innerHTML += `<option value="${esc(cat.slug)}">${esc(cat.name)}</option>`;
+            filterSelect.innerHTML += `<option value="${esc(cat.slug)}">${esc(cat.name)}</option>`;
+        });
+    }
+
+    document.getElementById('pf_category').addEventListener('change', (e) => {
+        updateSubcategoryOptions(e.target.value);
+    });
+
+    function updateSubcategoryOptions(categorySlug) {
+        const subSelect = document.getElementById('pf_subcategory');
+        subSelect.innerHTML = '<option value="">Select...</option>';
+        const cat = categoriesData.find(c => c.slug === categorySlug);
+        if (cat) {
+            cat.subcategories.forEach(sub => {
+                subSelect.innerHTML += `<option value="${esc(sub.slug)}">${esc(sub.display_name)}</option>`;
+            });
+        }
+    }
+
+    // --- ORDERS ---
+    async function loadOrders() {
+        const tbody = document.getElementById('ordersTableBody');
+        tbody.innerHTML = '<tr><td colspan="6" class="loading">Loading...</td></tr>';
+
+        try {
+            const status = document.getElementById('orderStatusFilter').value;
+            let url = `${API}/api/orders/admin/all?limit=50`;
+            if (status) url += `&status=${encodeURIComponent(status)}`;
+
+            const resp = await fetch(url, { headers: authHeaders() });
+            const data = await resp.json();
+            allOrders = data.orders || [];
+            renderOrdersTable();
+        } catch (err) {
+            tbody.innerHTML = '<tr><td colspan="6" class="loading">Error loading orders</td></tr>';
+        }
+    }
+
+    function renderOrdersTable() {
+        const tbody = document.getElementById('ordersTableBody');
+        if (allOrders.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="loading">No orders found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = allOrders.map(o => `
+            <tr>
+                <td><code style="font-size:12px">${esc(o.id.substring(0, 8))}...</code></td>
+                <td><code style="font-size:12px">${esc(o.user_id.substring(0, 8))}...</code></td>
+                <td>
+                    <select class="filter-select" style="font-size:12px;padding:4px 8px" onchange="updateOrderStatus('${esc(o.id)}', this.value)">
+                        ${['pending','confirmed','shipped','delivered','cancelled'].map(s =>
+                            `<option value="${s}" ${o.status === s ? 'selected' : ''}>${s.charAt(0).toUpperCase() + s.slice(1)}</option>`
+                        ).join('')}
+                    </select>
+                </td>
+                <td><strong>$${Number(o.total).toFixed(2)}</strong></td>
+                <td>${new Date(o.created_at).toLocaleDateString()}</td>
+                <td>
+                    <button class="icon-btn" onclick="viewOrderDetail('${esc(o.id)}')" title="View Details">&#128065;</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    document.getElementById('orderStatusFilter').addEventListener('change', loadOrders);
+
+    async function updateOrderStatus(orderId, status) {
+        try {
+            const resp = await fetch(`${API}/api/orders/${orderId}/status`, {
+                method: 'PUT',
+                headers: authHeaders(),
+                body: JSON.stringify({ status })
+            });
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.detail || 'Update failed');
+            showToast(`Order status updated to "${status}"`);
+        } catch (err) {
+            showToast(err.message, 'error');
+            loadOrders(); // reload to reset dropdown
+        }
+    }
+
+    function viewOrderDetail(orderId) {
+        const order = allOrders.find(o => o.id === orderId);
+        if (!order) return;
+
+        const addr = order.shipping_address || {};
+        const body = document.getElementById('orderDetailBody');
+        body.innerHTML = `
+            <div class="order-detail-grid">
+                <div class="detail-card">
+                    <h4>Order Info</h4>
+                    <p><strong>ID:</strong> ${esc(order.id)}</p>
+                    <p><strong>Status:</strong> <span class="badge badge-${order.status}">${capitalize(order.status)}</span></p>
+                    <p><strong>Total:</strong> $${Number(order.total).toFixed(2)}</p>
+                    <p><strong>Date:</strong> ${new Date(order.created_at).toLocaleString()}</p>
+                </div>
+                <div class="detail-card">
+                    <h4>Shipping Address</h4>
+                    <p>${esc(addr.line1 || 'N/A')}</p>
+                    ${addr.line2 ? `<p>${esc(addr.line2)}</p>` : ''}
+                    <p>${esc(addr.city || '')}${addr.state ? ', ' + esc(addr.state) : ''} ${esc(addr.zip_code || '')}</p>
+                    <p>${esc(addr.country || '')}</p>
+                </div>
+            </div>
+            <h4 style="font-family:'Bebas Neue';font-size:18px;color:var(--navy);margin-bottom:8px">Order Items</h4>
+            <div class="order-items-list">
+                ${(order.items || []).map(item => `
+                    <div class="order-item-row">
+                        <img src="${esc(item.product_image)}" alt="" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 48%22><rect fill=%22%23e5e7eb%22 width=%2248%22 height=%2248%22/></svg>'">
+                        <div class="order-item-info">
+                            <div class="name">${esc(item.product_name)}</div>
+                            <div class="meta">Size: ${esc(item.size)} | Color: ${esc(item.color)} | Qty: ${item.quantity}</div>
+                        </div>
+                        <div><strong>$${Number(item.price).toFixed(2)}</strong></div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        document.getElementById('orderModal').classList.add('active');
+    }
+
+    function closeOrderModal() {
+        document.getElementById('orderModal').classList.remove('active');
+    }
+
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                overlay.classList.remove('active');
+                editingProductId = null;
+            }
+        });
+    });
+
+    // --- CONTENT CMS ---
+    let allContent = [];
+    let editingContentId = null;
+
+    async function loadContent() {
+        const tbody = document.getElementById('contentTableBody');
+        tbody.innerHTML = '<tr><td colspan="9" class="loading">Loading...</td></tr>';
+        try {
+            const resp = await fetch(`${API}/api/content/admin/slots?limit=100`, { headers: authHeaders() });
+            const data = await resp.json();
+            allContent = data.slots || [];
+            renderContentTable();
+        } catch (err) {
+            tbody.innerHTML = '<tr><td colspan="9" class="loading">Error loading content</td></tr>';
+        }
+    }
+
+    function renderContentTable() {
+        const tbody = document.getElementById('contentTableBody');
+        const typeFilter = document.getElementById('contentTypeFilter').value;
+        let filtered = allContent;
+        if (typeFilter) filtered = allContent.filter(s => s.slot_type === typeFilter);
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="loading">No content slots found</td></tr>';
+            return;
+        }
+        tbody.innerHTML = filtered.map(s => {
+            const updated = s.updated_at ? new Date(s.updated_at).toLocaleDateString() : '-';
+            return `<tr>
+                <td><code style="font-size:12px;font-weight:600">${esc(s.slot_key)}</code></td>
+                <td><span class="badge" style="background:#e0e7ff;color:#3730a3">${esc(s.slot_type)}</span></td>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.title || '-')}</td>
+                <td>${s.image_url ? '<img class="product-thumb" src="' + esc(s.image_url) + '" style="width:40px;height:40px;object-fit:cover;border-radius:4px" onerror="this.style.display=\'none\'">' : '-'}</td>
+                <td>${s.link_text ? esc(s.link_text) : '-'}</td>
+                <td>${s.display_order}</td>
+                <td><span class="badge ${s.is_active ? 'badge-active' : 'badge-inactive'}">${s.is_active ? 'Active' : 'Inactive'}</span></td>
+                <td style="font-size:12px">${updated}</td>
+                <td class="actions-cell">
+                    <button class="icon-btn edit" onclick="editContent('${esc(s.id)}')" title="Edit">&#9998;</button>
+                    <button class="icon-btn delete" onclick="toggleContent('${esc(s.id)}', ${!s.is_active})" title="${s.is_active ? 'Deactivate' : 'Activate'}">${s.is_active ? '&#10006;' : '&#10004;'}</button>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    document.getElementById('contentTypeFilter').addEventListener('change', renderContentTable);
+
+    function openContentModal(slot = null) {
+        editingContentId = slot ? slot.id : null;
+        document.getElementById('contentModalTitle').textContent = slot ? 'Edit Content Slot' : 'Add Content Slot';
+        document.getElementById('contentSubmitBtn').textContent = slot ? 'Update Slot' : 'Create Slot';
+        document.getElementById('cms_slot_key').value = slot ? slot.slot_key : '';
+        document.getElementById('cms_slot_key').disabled = !!slot;
+        document.getElementById('cms_slot_type').value = slot ? slot.slot_type : 'hero';
+        document.getElementById('cms_title').value = slot ? (slot.title || '') : '';
+        document.getElementById('cms_badge_text').value = slot ? (slot.badge_text || '') : '';
+        document.getElementById('cms_subtitle').value = slot ? (slot.subtitle || '') : '';
+        document.getElementById('cms_body_text').value = slot ? (slot.body_text || '') : '';
+        document.getElementById('cms_image_url').value = slot ? (slot.image_url || '') : '';
+        document.getElementById('cms_link_text').value = slot ? (slot.link_text || '') : '';
+        document.getElementById('cms_link_action').value = slot ? (slot.link_action || '') : '';
+        document.getElementById('cms_display_order').value = slot ? (slot.display_order || 0) : 0;
+        document.getElementById('cms_active').value = slot ? String(slot.is_active) : 'true';
+        document.getElementById('cms_metadata').value = slot && slot.metadata_json ? JSON.stringify(slot.metadata_json, null, 2) : '';
+        document.getElementById('contentModal').classList.add('active');
+    }
+
+    function closeContentModal() {
+        document.getElementById('contentModal').classList.remove('active');
+        editingContentId = null;
+    }
+
+    async function editContent(id) {
+        try {
+            const resp = await fetch(`${API}/api/content/admin/slots/${id}`, { headers: authHeaders() });
+            if (!resp.ok) throw new Error('Slot not found');
+            const slot = await resp.json();
+            openContentModal(slot);
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    }
+
+    async function toggleContent(id, activate) {
+        try {
+            const resp = await fetch(`${API}/api/content/admin/slots/${id}`, {
+                method: 'PUT', headers: authHeaders(),
+                body: JSON.stringify({ is_active: activate })
+            });
+            if (!resp.ok) { const d = await resp.json(); throw new Error(d.detail || 'Update failed'); }
+            showToast(activate ? 'Slot activated' : 'Slot deactivated');
+            loadContent();
+        } catch (err) { showToast(err.message, 'error'); }
+    }
+
+    async function submitContent() {
+        let metadata = null;
+        const metaStr = document.getElementById('cms_metadata').value.trim();
+        if (metaStr) {
+            try { metadata = JSON.parse(metaStr); } catch (e) { showToast('Invalid JSON in metadata', 'error'); return; }
+        }
+
+        const payload = {
+            slot_type: document.getElementById('cms_slot_type').value,
+            title: document.getElementById('cms_title').value || null,
+            badge_text: document.getElementById('cms_badge_text').value || null,
+            subtitle: document.getElementById('cms_subtitle').value || null,
+            body_text: document.getElementById('cms_body_text').value || null,
+            image_url: document.getElementById('cms_image_url').value || null,
+            link_text: document.getElementById('cms_link_text').value || null,
+            link_action: document.getElementById('cms_link_action').value || null,
+            display_order: parseInt(document.getElementById('cms_display_order').value) || 0,
+            is_active: document.getElementById('cms_active').value === 'true',
+            metadata_json: metadata,
+        };
+        if (!editingContentId) {
+            payload.slot_key = document.getElementById('cms_slot_key').value;
+        }
+
+        try {
+            let resp;
+            if (editingContentId) {
+                resp = await fetch(`${API}/api/content/admin/slots/${editingContentId}`, {
+                    method: 'PUT', headers: authHeaders(), body: JSON.stringify(payload)
+                });
+            } else {
+                resp = await fetch(`${API}/api/content/admin/slots`, {
+                    method: 'POST', headers: authHeaders(), body: JSON.stringify(payload)
+                });
+            }
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.detail || 'Save failed');
+            showToast(editingContentId ? 'Content slot updated' : 'Content slot created');
+            closeContentModal();
+            loadContent();
+        } catch (err) { showToast(err.message, 'error'); }
+    }
+
+    // --- PROMOTIONS ---
+    let allPromos = [];
+    let editingPromoId = null;
+
+    async function loadPromotions() {
+        const tbody = document.getElementById('promosTableBody');
+        tbody.innerHTML = '<tr><td colspan="9" class="loading">Loading...</td></tr>';
+        try {
+            const resp = await fetch(`${API}/api/promotions/`, { headers: authHeaders() });
+            const data = await resp.json();
+            allPromos = data.promotions || data || [];
+            renderPromosTable();
+        } catch (err) {
+            tbody.innerHTML = '<tr><td colspan="9" class="loading">Error loading promotions</td></tr>';
+        }
+    }
+
+    function renderPromosTable() {
+        const tbody = document.getElementById('promosTableBody');
+        if (allPromos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="loading">No promotions found</td></tr>';
+            return;
+        }
+        tbody.innerHTML = allPromos.map(p => {
+            const val = p.discount_type === 'percentage' ? p.discount_value + '%' : '$' + Number(p.discount_value).toFixed(2);
+            const used = `${p.used_count || 0}` + (p.usage_limit ? ` / ${p.usage_limit}` : ' / &infin;');
+            const start = p.start_date ? new Date(p.start_date).toLocaleDateString() : '-';
+            const end = p.end_date ? new Date(p.end_date).toLocaleDateString() : '-';
+            return `<tr>
+                <td><code style="font-size:13px;font-weight:600">${esc(p.code)}</code></td>
+                <td>${capitalize(p.discount_type)}</td>
+                <td><strong>${val}</strong></td>
+                <td>$${Number(p.min_order_value || 0).toFixed(2)}</td>
+                <td>${p.max_discount ? '$' + Number(p.max_discount).toFixed(2) : '-'}</td>
+                <td>${used}</td>
+                <td><span class="badge ${p.is_active ? 'badge-active' : 'badge-inactive'}">${p.is_active ? 'Active' : 'Inactive'}</span></td>
+                <td>${start} - ${end}</td>
+                <td class="actions-cell">
+                    <button class="icon-btn edit" onclick="editPromo('${esc(p.id)}')" title="Edit">&#9998;</button>
+                    <button class="icon-btn delete" onclick="togglePromo('${esc(p.id)}', ${!p.is_active})" title="${p.is_active ? 'Deactivate' : 'Activate'}">${p.is_active ? '&#10006;' : '&#10004;'}</button>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    function openPromoModal(promo = null) {
+        editingPromoId = promo ? promo.id : null;
+        document.getElementById('promoModalTitle').textContent = promo ? 'Edit Promotion' : 'Add Promotion';
+        document.getElementById('promoSubmitBtn').textContent = promo ? 'Update Promotion' : 'Create Promotion';
+        document.getElementById('promo_code').value = promo ? promo.code : '';
+        document.getElementById('promo_code').disabled = !!promo;
+        document.getElementById('promo_type').value = promo ? promo.discount_type : 'percentage';
+        document.getElementById('promo_value').value = promo ? promo.discount_value : '';
+        document.getElementById('promo_max_discount').value = promo ? (promo.max_discount || '') : '';
+        document.getElementById('promo_min_order').value = promo ? (promo.min_order_value || 0) : 0;
+        document.getElementById('promo_usage_limit').value = promo ? (promo.usage_limit || 0) : 0;
+        document.getElementById('promo_per_user').value = promo ? (promo.per_user_limit || 0) : 0;
+        document.getElementById('promo_active').value = promo ? String(promo.is_active) : 'true';
+        document.getElementById('promo_start').value = promo && promo.start_date ? promo.start_date.substring(0, 10) : '';
+        document.getElementById('promo_end').value = promo && promo.end_date ? promo.end_date.substring(0, 10) : '';
+        document.getElementById('promo_categories').value = promo ? (promo.applicable_categories || []).join(', ') : '';
+        document.getElementById('promo_products').value = promo ? (promo.applicable_products || []).join(', ') : '';
+        document.getElementById('promoModal').classList.add('active');
+    }
+
+    function closePromoModal() {
+        document.getElementById('promoModal').classList.remove('active');
+        editingPromoId = null;
+    }
+
+    async function editPromo(id) {
+        try {
+            const resp = await fetch(`${API}/api/promotions/${id}`, { headers: authHeaders() });
+            if (!resp.ok) throw new Error('Promotion not found');
+            const promo = await resp.json();
+            openPromoModal(promo);
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    }
+
+    async function togglePromo(id, activate) {
+        const action = activate ? 'activate' : 'deactivate';
+        if (!confirm(`Are you sure you want to ${action} this promotion?`)) return;
+        try {
+            const resp = await fetch(`${API}/api/promotions/${id}`, {
+                method: 'PUT',
+                headers: authHeaders(),
+                body: JSON.stringify({ is_active: activate })
+            });
+            if (!resp.ok) { const d = await resp.json(); throw new Error(d.detail || 'Update failed'); }
+            showToast(`Promotion ${action}d`);
+            loadPromotions();
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    }
+
+    async function submitPromo() {
+        const cats = document.getElementById('promo_categories').value.split(',').map(s => s.trim()).filter(Boolean);
+        const prods = document.getElementById('promo_products').value.split(',').map(s => s.trim()).filter(Boolean);
+        const payload = {
+            discount_type: document.getElementById('promo_type').value,
+            discount_value: parseFloat(document.getElementById('promo_value').value),
+            max_discount: document.getElementById('promo_max_discount').value ? parseFloat(document.getElementById('promo_max_discount').value) : null,
+            min_order_value: parseFloat(document.getElementById('promo_min_order').value) || 0,
+            usage_limit: parseInt(document.getElementById('promo_usage_limit').value) || 0,
+            per_user_limit: parseInt(document.getElementById('promo_per_user').value) || 0,
+            is_active: document.getElementById('promo_active').value === 'true',
+            start_date: document.getElementById('promo_start').value || null,
+            end_date: document.getElementById('promo_end').value || null,
+            applicable_categories: cats.length ? cats : null,
+            applicable_products: prods.length ? prods : null,
+        };
+        if (!editingPromoId) {
+            payload.code = document.getElementById('promo_code').value.toUpperCase();
+        }
+
+        try {
+            let resp;
+            if (editingPromoId) {
+                resp = await fetch(`${API}/api/promotions/${editingPromoId}`, {
+                    method: 'PUT', headers: authHeaders(), body: JSON.stringify(payload)
+                });
+            } else {
+                resp = await fetch(`${API}/api/promotions/`, {
+                    method: 'POST', headers: authHeaders(), body: JSON.stringify(payload)
+                });
+            }
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.detail || 'Save failed');
+            showToast(editingPromoId ? 'Promotion updated' : 'Promotion created');
+            closePromoModal();
+            loadPromotions();
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    }
+
+    // Close modals on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+            editingProductId = null;
+            editingPromoId = null;
+        }
+    });
+</script>
+
+</body>
+</html>

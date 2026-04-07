@@ -1,0 +1,212 @@
+version: "3.9"
+
+services:
+  # ── Databases ──────────────────────────────────────────
+  user-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: luxe
+      POSTGRES_PASSWORD: luxe123
+      POSTGRES_DB: user_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - user_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U luxe -d user_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - luxe-net
+
+  product-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: luxe
+      POSTGRES_PASSWORD: luxe123
+      POSTGRES_DB: product_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - product_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U luxe -d product_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - luxe-net
+
+  order-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: luxe
+      POSTGRES_PASSWORD: luxe123
+      POSTGRES_DB: order_db
+    ports:
+      - "5436:5432"
+    volumes:
+      - order_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U luxe -d order_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - luxe-net
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - luxe-net
+
+  promotion-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: luxe
+      POSTGRES_PASSWORD: luxe123
+      POSTGRES_DB: promotion_db
+    ports:
+      - "5437:5432"
+    volumes:
+      - promotion_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U luxe -d promotion_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - luxe-net
+
+  content-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: luxe
+      POSTGRES_PASSWORD: luxe123
+      POSTGRES_DB: content_db
+    ports:
+      - "5438:5432"
+    volumes:
+      - content_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U luxe -d content_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - luxe-net
+
+  # ── Microservices ──────────────────────────────────────
+  user-service:
+    build: ./services/user
+    ports:
+      - "8004:8004"
+    env_file: .env
+    depends_on:
+      user-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - luxe-net
+
+  product-service:
+    build: ./services/product
+    ports:
+      - "8001:8001"
+    env_file: .env
+    depends_on:
+      product-db:
+        condition: service_healthy
+    networks:
+      - luxe-net
+
+  cart-service:
+    build: ./services/cart
+    ports:
+      - "8002:8002"
+    env_file: .env
+    depends_on:
+      redis:
+        condition: service_healthy
+      product-service:
+        condition: service_started
+    networks:
+      - luxe-net
+
+  order-service:
+    build: ./services/order
+    ports:
+      - "8003:8003"
+    env_file: .env
+    depends_on:
+      order-db:
+        condition: service_healthy
+      cart-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+    networks:
+      - luxe-net
+
+  promotion-service:
+    build: ./services/promotion
+    ports:
+      - "8005:8005"
+    env_file: .env
+    depends_on:
+      promotion-db:
+        condition: service_healthy
+    networks:
+      - luxe-net
+
+  content-service:
+    build: ./services/content
+    ports:
+      - "8006:8006"
+    env_file: .env
+    depends_on:
+      content-db:
+        condition: service_healthy
+    networks:
+      - luxe-net
+
+  gateway:
+    build: ./gateway
+    ports:
+      - "8000:8000"
+    env_file: .env
+    volumes:
+      - ./public:/app/static
+    depends_on:
+      - user-service
+      - product-service
+      - cart-service
+      - order-service
+      - promotion-service
+      - content-service
+    networks:
+      - luxe-net
+
+volumes:
+  user_data:
+  product_data:
+  order_data:
+  promotion_data:
+  content_data:
+  redis_data:
+
+networks:
+  luxe-net:
+    driver: bridge
