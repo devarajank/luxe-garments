@@ -12,27 +12,15 @@ const CATEGORIES = [
   { name: 'Beauty',      icon: '💄', subcategories: ['Skincare', 'Makeup', 'Haircare', 'Fragrance', 'Wellness'] },
 ];
 
-const PROMO_MESSAGES = [
-  '🎉 Free delivery on orders above ₹499',
-  '🏷️ Use code WELCOME10 for 10% off your first order',
-  '⚡ Flash sale: Up to 40% off Electronics today',
-];
-
 export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [accountOpen, setAccountOpen] = useState(false);
-  const [promoIdx, setPromoIdx] = useState(0);
   const accountRef = useRef(null);
   const navigate = useNavigate();
   const { getCartCount } = useCart();
   const { user, logout } = useAuth();
-
-  useEffect(() => {
-    const id = setInterval(() => setPromoIdx(i => (i + 1) % PROMO_MESSAGES.length), 4000);
-    return () => clearInterval(id);
-  }, []);
 
   useEffect(() => {
     const handler = (e) => {
@@ -52,9 +40,6 @@ export default function Navbar() {
 
   return (
     <nav>
-      {/* Rotating promo bar */}
-      <div className="promo-bar">{PROMO_MESSAGES[promoIdx]}</div>
-
       {/* Main navbar */}
       <div className="nav-main">
         <Link to="/" style={{ textDecoration: 'none', flexShrink: 0 }}>
@@ -97,6 +82,18 @@ export default function Navbar() {
                 <div style={{ padding: '8px 16px', fontSize: '12px', color: '#6B7280', borderBottom: '1px solid #f0f0f0' }}>
                   {user.email}
                 </div>
+                <button
+                  onClick={() => { setAccountOpen(false); navigate('/account'); }}
+                  style={{
+                    display: 'block', width: '100%', textAlign: 'left',
+                    padding: '10px 16px', background: 'none', border: 'none',
+                    fontSize: '13px', cursor: 'pointer', color: '#1D2939', fontWeight: 600,
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#F9F7F4'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                >
+                  My Account
+                </button>
                 <button
                   onClick={() => { logout(); setAccountOpen(false); navigate('/'); }}
                   style={{

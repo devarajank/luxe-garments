@@ -12,6 +12,7 @@ import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Orders from './pages/Orders';
+import Account from './pages/Account';
 import AdminLayout from './pages/Admin/AdminLayout';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import AdminProducts from './pages/Admin/AdminProducts';
@@ -57,6 +58,7 @@ function App() {
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/orders" element={<Orders />} />
+                  <Route path="/account" element={<Account />} />
                 </Routes>
               </>
             }
