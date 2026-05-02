@@ -18,3 +18,11 @@ async def get_db():
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Add new columns to existing tables if they don't exist
+        for col, definition in [
+            ("return_reason", "TEXT"),
+            ("refund_amount", "NUMERIC(10,2)"),
+        ]:
+            await conn.execute(__import__("sqlalchemy").text(
+                f"ALTER TABLE orders ADD COLUMN IF NOT EXISTS {col} {definition}"
+            ))

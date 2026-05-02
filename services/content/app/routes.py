@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Header, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import Optional
+import httpx
+import time
 from app.database import get_db
 from app.models import ContentSlot
 from app.schemas import (
@@ -11,8 +13,17 @@ from app.schemas import (
     ContentSlotListResponse,
     PublicContentResponse,
 )
+from app.config import (
+    CONTENTFUL_SPACE_ID,
+    CONTENTFUL_ACCESS_TOKEN,
+    CONTENTFUL_BASE_URL,
+    CONTENTFUL_CACHE_TTL,
+)
 
 router = APIRouter(prefix="/api/content", tags=["content"])
+
+# Simple in-memory cache to avoid burning Contentful API quota
+_contentful_cache: dict = {"data": None, "ts": 0.0}
 
 
 def slot_to_response(slot: ContentSlot) -> ContentSlotResponse:
@@ -35,11 +46,67 @@ def slot_to_response(slot: ContentSlot) -> ContentSlotResponse:
     )
 
 
+async def _fetch_from_contentful() -> Optional[PublicContentResponse]:
+    """Fetch content slots from Contentful Delivery API with in-memory caching."""
+    if not CONTENTFUL_SPACE_ID or not CONTENTFUL_ACCESS_TOKEN:
+        return None
+
+    now = time.monotonic()
+    if _contentful_cache["data"] and now - _contentful_cache["ts"] < CONTENTFUL_CACHE_TTL:
+        return _contentful_cache["data"]
+
+    url = f"{CONTENTFUL_BASE_URL}/spaces/{CONTENTFUL_SPACE_ID}/entries"
+    params = {
+        "access_token": CONTENTFUL_ACCESS_TOKEN,
+        "content_type": "contentSlot",
+        "limit": 100,
+        "order": "fields.displayOrder",
+    }
+
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        resp = await client.get(url, params=params)
+        resp.raise_for_status()
+        data = resp.json()
+
+    slots: dict[str, ContentSlotResponse] = {}
+    for item in data.get("items", []):
+        fields = item.get("fields", {})
+        slot_key = fields.get("slotKey")
+        if not slot_key or not fields.get("isActive", True):
+            continue
+        slots[slot_key] = ContentSlotResponse(
+            id=item["sys"]["id"],
+            slot_key=slot_key,
+            slot_type=fields.get("slotType", "text"),
+            title=fields.get("title"),
+            subtitle=fields.get("subtitle"),
+            body_text=fields.get("bodyText"),
+            image_url=fields.get("imageUrl"),
+            link_text=fields.get("linkText"),
+            link_action=fields.get("linkAction"),
+            badge_text=fields.get("badgeText"),
+            display_order=fields.get("displayOrder", 0),
+            is_active=fields.get("isActive", True),
+            metadata_json=fields.get("metadataJson"),
+        )
+
+    result = PublicContentResponse(slots=slots)
+    _contentful_cache["data"] = result
+    _contentful_cache["ts"] = now
+    return result
+
+
 # ── Public endpoints ──────────────────────────────────────────────────
 
 @router.get("/slots", response_model=PublicContentResponse)
 async def get_public_slots(db: AsyncSession = Depends(get_db)):
-    """Return all active content slots as a dict keyed by slot_key. Called by the frontend on page load."""
+    """Return all active content slots as a dict keyed by slot_key.
+    Uses Contentful if configured, falls back to local DB."""
+    contentful_response = await _fetch_from_contentful()
+    if contentful_response is not None:
+        return contentful_response
+
+    # DB fallback
     result = await db.execute(
         select(ContentSlot)
         .where(ContentSlot.is_active == True)

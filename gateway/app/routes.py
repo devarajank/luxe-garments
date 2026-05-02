@@ -28,16 +28,19 @@ def is_public_route(method: str, path: str) -> bool:
 
 
 def is_auth_optional(path: str) -> bool:
-    """Cart endpoints work for both guests and authenticated users."""
-    return "/api/cart" in path
+    """Cart and Order endpoints work for both guests and authenticated users (demo)."""
+    return "/api/cart" in path or "/api/orders" in path
 
 
 async def proxy_request(request: Request, base_url: str, path: str, user_id: str = None, user_role: str = None):
     """Forward the request to the target service."""
-    headers = dict(request.headers)
-    headers.pop("host", None)
-    headers.pop("Host", None)
+    # Copy all headers from original request, preserving case
+    headers = {}
+    for key, value in request.headers.items():
+        if key.lower() not in ("host",):
+            headers[key] = value
 
+    # Ensure x-user-id is set if we have a user_id
     if user_id:
         headers["x-user-id"] = user_id
     if user_role:
@@ -81,6 +84,10 @@ async def gateway(request: Request, path: str):
     user_id = None
     auth_header = request.headers.get("authorization", "")
     session_id = request.headers.get("x-session-id", "")
+
+    # Check for direct x-user-id header (for demo/client-side auth)
+    if not user_id:
+        user_id = request.headers.get("x-user-id")
 
     user_role = None
     if auth_header.startswith("Bearer "):

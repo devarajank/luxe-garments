@@ -12,9 +12,18 @@ class ShippingAddress(BaseModel):
     country: str = "US"
 
 
+class OrderItemRequest(BaseModel):
+    product_id: str
+    product_name: str
+    price: float
+    quantity: int
+    size: str = ""
+    color: str = ""
+
 class CreateOrderRequest(BaseModel):
     shipping_address: ShippingAddress
     promotion_code: Optional[str] = None
+    items: Optional[list[OrderItemRequest]] = None
 
 
 class OrderItemResponse(BaseModel):
@@ -35,6 +44,8 @@ class OrderResponse(BaseModel):
     total: float
     promotion_code: Optional[str] = None
     discount_amount: float = 0
+    return_reason: Optional[str] = None
+    refund_amount: Optional[float] = None
     shipping_address: Optional[dict] = None
     items: list[OrderItemResponse] = []
     created_at: datetime
@@ -58,6 +69,8 @@ class AdminOrderResponse(BaseModel):
     total: float
     promotion_code: Optional[str] = None
     discount_amount: float = 0
+    return_reason: Optional[str] = None
+    refund_amount: Optional[float] = None
     shipping_address: Optional[dict] = None
     items: list[OrderItemResponse] = []
     created_at: datetime
@@ -69,3 +82,11 @@ class AdminOrderResponse(BaseModel):
 class AdminOrderListResponse(BaseModel):
     orders: list[AdminOrderResponse]
     total: int
+
+
+class ReturnRequest(BaseModel):
+    reason: str
+
+
+class ApproveReturnRequest(BaseModel):
+    refund_amount: Optional[float] = None

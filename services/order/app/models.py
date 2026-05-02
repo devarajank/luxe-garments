@@ -15,6 +15,8 @@ class Order(Base):
     shipping_address: Mapped[dict] = mapped_column(JSON, nullable=True)
     promotion_code: Mapped[str] = mapped_column(String(50), nullable=True)
     discount_amount: Mapped[float] = mapped_column(Numeric(10, 2), default=0)
+    return_reason: Mapped[str] = mapped_column(Text, nullable=True)
+    refund_amount: Mapped[float] = mapped_column(Numeric(10, 2), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

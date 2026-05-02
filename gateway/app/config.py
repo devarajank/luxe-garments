@@ -17,8 +17,14 @@ SERVICE_MAP = {
 PUBLIC_ROUTES = [
     ("POST", "/api/users/register"),
     ("POST", "/api/users/login"),
+    ("POST", "/api/users/forgot-password"),
+    ("POST", "/api/users/reset-password"),
     ("GET", "/api/products"),
     ("GET", "/api/products/categories"),
+    ("GET", "/api/products/search"),
+    ("GET", "/api/products/"),
+    ("POST", "/api/orders/"),
     ("POST", "/api/promotions/validate"),
     ("GET", "/api/content/slots"),
+    ("GET", "/api/content/deals"),
 ]

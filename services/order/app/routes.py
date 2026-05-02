@@ -5,7 +5,7 @@ from sqlalchemy import select, func
 from typing import Optional
 from app.database import get_db
 from app.models import Order, OrderItem
-from app.schemas import CreateOrderRequest, OrderResponse, OrderItemResponse, OrderListResponse, UpdateStatusRequest, AdminOrderResponse, AdminOrderListResponse
+from app.schemas import CreateOrderRequest, OrderResponse, OrderItemResponse, OrderListResponse, UpdateStatusRequest, AdminOrderResponse, AdminOrderListResponse, ReturnRequest, ApproveReturnRequest
 from app.config import CART_SERVICE_URL, PROMOTION_SERVICE_URL
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
@@ -17,35 +17,46 @@ async def create_order(
     x_user_id: Optional[str] = Header(None),
     db: AsyncSession = Depends(get_db),
 ):
+    # For demo: generate a user ID if not provided
     if not x_user_id:
-        raise HTTPException(status_code=401, detail="Authentication required")
+        x_user_id = f"guest-{id(req)}"
 
-    # Fetch cart from Cart Service
-    async with httpx.AsyncClient() as client:
-        try:
-            resp = await client.get(
-                f"{CART_SERVICE_URL}/api/cart/",
-                headers={"x-user-id": x_user_id},
-                timeout=10,
-            )
-            if resp.status_code != 200:
-                raise HTTPException(status_code=400, detail="Could not fetch cart")
-            cart = resp.json()
-        except httpx.RequestError:
-            raise HTTPException(status_code=503, detail="Cart service unavailable")
+    # Use items from request or fetch from Cart Service
+    if req.items:
+        # Items provided directly in request
+        cart_items = req.items
+        total = sum(item.price * item.quantity for item in cart_items)
+    else:
+        # Fetch cart from Cart Service
+        async with httpx.AsyncClient() as client:
+            try:
+                resp = await client.get(
+                    f"{CART_SERVICE_URL}/api/cart/",
+                    headers={"x-user-id": x_user_id},
+                    timeout=10,
+                )
+                if resp.status_code != 200:
+                    raise HTTPException(status_code=400, detail="Could not fetch cart")
+                cart = resp.json()
+            except httpx.RequestError:
+                raise HTTPException(status_code=503, detail="Cart service unavailable")
 
-    if not cart.get("items"):
-        raise HTTPException(status_code=400, detail="Cart is empty")
+        if not cart.get("items"):
+            raise HTTPException(status_code=400, detail="Cart is empty")
+        cart_items = cart["items"]
+        total = cart["total"]
 
     # Apply promotion if provided
-    total = cart["total"]
     discount_amount = 0.0
     promotion_code = None
 
     if req.promotion_code:
         cart_items_for_promo = [
-            {"product_id": item["product_id"], "category": item.get("category", ""), "quantity": item.get("qty", 1), "price": item.get("price", 0)}
-            for item in cart["items"]
+            {"product_id": item.product_id if hasattr(item, 'product_id') else item["product_id"],
+             "category": item.get("category", "") if isinstance(item, dict) else "",
+             "quantity": item.quantity if hasattr(item, 'quantity') else item.get("qty", 1),
+             "price": item.price if hasattr(item, 'price') else item.get("price", 0)}
+            for item in cart_items
         ]
         async with httpx.AsyncClient() as client:
             try:
@@ -77,17 +88,30 @@ async def create_order(
     await db.flush()
 
     # Create order items from cart
-    for item in cart["items"]:
-        order_item = OrderItem(
-            order_id=order.id,
-            product_id=item["product_id"],
-            product_name=item.get("name", ""),
-            product_image=item.get("image_url", ""),
-            price=item.get("price", 0),
-            size=item.get("size", ""),
-            color=item.get("color", ""),
-            quantity=item.get("qty", 1),
-        )
+    for item in cart_items:
+        # Handle both dict and object types
+        if isinstance(item, dict):
+            order_item = OrderItem(
+                order_id=order.id,
+                product_id=item["product_id"],
+                product_name=item.get("name", ""),
+                product_image=item.get("image_url", ""),
+                price=item.get("price", 0),
+                size=item.get("size", ""),
+                color=item.get("color", ""),
+                quantity=item.get("qty", 1),
+            )
+        else:
+            order_item = OrderItem(
+                order_id=order.id,
+                product_id=item.product_id,
+                product_name=item.product_name,
+                product_image="",
+                price=item.price,
+                size=item.size,
+                color=item.color,
+                quantity=item.quantity,
+            )
         db.add(order_item)
 
     await db.commit()
@@ -185,7 +209,7 @@ async def update_order_status(
     if x_user_role != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
 
-    valid_statuses = ["pending", "confirmed", "shipped", "delivered", "cancelled"]
+    valid_statuses = ["pending", "confirmed", "shipped", "delivered", "cancelled", "return_requested", "returned"]
     if req.status not in valid_statuses:
         raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}")
 
@@ -217,6 +241,79 @@ async def get_order(
         raise HTTPException(status_code=404, detail="Order not found")
     await db.refresh(order, ["items"])
     return order_to_response(order)
+
+
+@router.put("/{order_id}/return", response_model=OrderResponse)
+async def request_return(
+    order_id: str,
+    req: ReturnRequest,
+    x_user_id: Optional[str] = Header(None),
+    db: AsyncSession = Depends(get_db),
+):
+    if not x_user_id:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    result = await db.execute(
+        select(Order).where(Order.id == order_id, Order.user_id == x_user_id)
+    )
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order.status != "delivered":
+        raise HTTPException(status_code=400, detail="Only delivered orders can be returned")
+
+    order.status = "return_requested"
+    order.return_reason = req.reason.strip()
+    await db.commit()
+    await db.refresh(order, ["items"])
+    return order_to_response(order)
+
+
+@router.put("/{order_id}/approve-return", response_model=AdminOrderResponse)
+async def approve_return(
+    order_id: str,
+    req: ApproveReturnRequest,
+    x_user_role: Optional[str] = Header(None),
+    db: AsyncSession = Depends(get_db),
+):
+    if x_user_role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    result = await db.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order.status != "return_requested":
+        raise HTTPException(status_code=400, detail="Order is not in return_requested status")
+
+    order.status = "returned"
+    order.refund_amount = req.refund_amount if req.refund_amount is not None else float(order.total)
+    await db.commit()
+    await db.refresh(order, ["items"])
+    return admin_order_to_response(order)
+
+
+@router.put("/{order_id}/reject-return", response_model=AdminOrderResponse)
+async def reject_return(
+    order_id: str,
+    x_user_role: Optional[str] = Header(None),
+    db: AsyncSession = Depends(get_db),
+):
+    if x_user_role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    result = await db.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order.status != "return_requested":
+        raise HTTPException(status_code=400, detail="Order is not in return_requested status")
+
+    order.status = "delivered"
+    order.return_reason = None
+    await db.commit()
+    await db.refresh(order, ["items"])
+    return admin_order_to_response(order)
 
 
 @router.put("/{order_id}/cancel", response_model=OrderResponse)
@@ -251,6 +348,8 @@ def admin_order_to_response(order: Order) -> AdminOrderResponse:
         total=float(order.total),
         promotion_code=order.promotion_code,
         discount_amount=float(order.discount_amount) if order.discount_amount else 0,
+        return_reason=order.return_reason,
+        refund_amount=float(order.refund_amount) if order.refund_amount is not None else None,
         shipping_address=order.shipping_address,
         items=[
             OrderItemResponse(
@@ -276,6 +375,8 @@ def order_to_response(order: Order) -> OrderResponse:
         total=float(order.total),
         promotion_code=order.promotion_code,
         discount_amount=float(order.discount_amount) if order.discount_amount else 0,
+        return_reason=order.return_reason,
+        refund_amount=float(order.refund_amount) if order.refund_amount is not None else None,
         shipping_address=order.shipping_address,
         items=[
             OrderItemResponse(

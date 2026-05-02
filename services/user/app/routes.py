@@ -1,3 +1,5 @@
+import uuid
+import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -7,8 +9,17 @@ from app.models import User, Address
 from app.schemas import (
     RegisterRequest, LoginRequest, TokenResponse, UserResponse,
     ProfileUpdate, AddressCreate, AddressResponse,
+    ForgotPasswordRequest, ResetPasswordRequest,
 )
 from app.auth import hash_password, verify_password, create_token, decode_token
+from app.config import REDIS_URL, FRONTEND_URL
+from app.email_utils import send_password_reset_email
+
+RESET_TOKEN_TTL = 3600  # 1 hour
+
+
+def get_redis():
+    return aioredis.from_url(REDIS_URL, decode_responses=True)
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
@@ -126,3 +137,37 @@ async def delete_address(
     await db.delete(addr)
     await db.commit()
     return {"status": "deleted"}
+
+
+@router.post("/forgot-password")
+async def forgot_password(req: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.email == req.email))
+    user = result.scalar_one_or_none()
+    # Always return success to prevent email enumeration
+    if user:
+        token = str(uuid.uuid4())
+        redis = get_redis()
+        async with redis:
+            await redis.setex(f"reset:{token}", RESET_TOKEN_TTL, user.id)
+        reset_link = f"{FRONTEND_URL}/reset-password?token={token}"
+        await send_password_reset_email(user.email, reset_link)
+    return {"message": "If that email is registered, a reset link has been sent."}
+
+
+@router.post("/reset-password")
+async def reset_password(req: ResetPasswordRequest, db: AsyncSession = Depends(get_db)):
+    if len(req.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    redis = get_redis()
+    async with redis:
+        user_id = await redis.get(f"reset:{req.token}")
+        if not user_id:
+            raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+        await redis.delete(f"reset:{req.token}")
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=400, detail="User not found")
+    user.password_hash = hash_password(req.new_password)
+    await db.commit()
+    return {"message": "Password updated successfully"}

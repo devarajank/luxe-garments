@@ -1,10 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Header
+from fastapi import APIRouter, Depends, HTTPException, Query, Header, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, text
 from typing import Optional
+import uuid
+import os
 from app.database import get_db
 from app.models import Product, Category, Subcategory
 from app.schemas import ProductResponse, CategoryResponse, SubcategoryResponse, ProductListResponse, ProductCreate, ProductUpdate
+
+UPLOAD_DIR = "/app/uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 
 router = APIRouter(prefix="/api/products", tags=["products"])
 
@@ -55,7 +62,7 @@ async def list_products(
     search: Optional[str] = None,
     min_price: Optional[float] = None,
     max_price: Optional[float] = None,
-    sort_by: Optional[str] = Query(None, pattern="^(price_asc|price_desc|newest)$"),
+    sort_by: Optional[str] = None,
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
@@ -69,7 +76,10 @@ async def list_products(
     if badge:
         query = query.where(Product.badge == badge)
     if search:
-        query = query.where(Product.name.ilike(f"%{search}%"))
+        # PostgreSQL full-text search on name and subtitle
+        query = query.where(
+            text("to_tsvector('english', COALESCE(products.name, '') || ' ' || COALESCE(products.subtitle, '')) @@ plainto_tsquery('english', :search_query)").bindparams(search_query=search)
+        )
     if min_price is not None:
         query = query.where(Product.price >= min_price)
     if max_price is not None:
@@ -101,6 +111,28 @@ async def list_products(
         items.append(product_to_response(p))
 
     return ProductListResponse(products=items, total=total, page=page, limit=limit)
+
+
+@router.get("/deals", response_model=list[ProductResponse])
+async def get_deals(
+    limit: int = Query(8, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get featured/discounted products for deals section."""
+    result = await db.execute(
+        select(Product)
+        .where(Product.is_active == True)
+        .order_by(Product.created_at.desc())
+        .limit(limit)
+    )
+    products = result.scalars().all()
+    items = []
+    for p in products:
+        await db.refresh(p, ["subcategory"])
+        if p.subcategory:
+            await db.refresh(p.subcategory, ["category"])
+        items.append(product_to_response(p))
+    return items
 
 
 @router.get("/{product_id}", response_model=ProductResponse)
@@ -231,3 +263,73 @@ async def delete_product(
     product.is_active = False
     await db.commit()
     return {"status": "deleted", "id": product_id}
+
+
+@router.post("/{product_id}/image", response_model=ProductResponse)
+async def upload_product_image(
+    product_id: str,
+    file: UploadFile = File(...),
+    x_user_role: Optional[str] = Header(None),
+    db: AsyncSession = Depends(get_db),
+):
+    if x_user_role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    if file.content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid file type. Allowed: jpg, jpeg, png, webp")
+
+    filename = file.filename or ""
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail=f"Invalid file extension. Allowed: {', '.join(ALLOWED_EXTENSIONS)}")
+
+    result = await db.execute(select(Product).where(Product.id == product_id))
+    product = result.scalar_one_or_none()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    # Remove old local file if present
+    if product.image_url and product.image_url.startswith("/uploads/"):
+        old_path = os.path.join(UPLOAD_DIR, os.path.basename(product.image_url))
+        if os.path.isfile(old_path):
+            os.remove(old_path)
+
+    short_uuid = uuid.uuid4().hex[:8]
+    new_filename = f"{product_id}_{short_uuid}.{ext}"
+    save_path = os.path.join(UPLOAD_DIR, new_filename)
+
+    contents = await file.read()
+    with open(save_path, "wb") as f:
+        f.write(contents)
+
+    product.image_url = f"/uploads/{new_filename}"
+    await db.commit()
+    await db.refresh(product, ["subcategory"])
+    await db.refresh(product.subcategory, ["category"])
+    return product_to_response(product)
+
+
+@router.delete("/{product_id}/image", response_model=ProductResponse)
+async def delete_product_image(
+    product_id: str,
+    x_user_role: Optional[str] = Header(None),
+    db: AsyncSession = Depends(get_db),
+):
+    if x_user_role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    result = await db.execute(select(Product).where(Product.id == product_id))
+    product = result.scalar_one_or_none()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    if product.image_url and product.image_url.startswith("/uploads/"):
+        old_path = os.path.join(UPLOAD_DIR, os.path.basename(product.image_url))
+        if os.path.isfile(old_path):
+            os.remove(old_path)
+
+    product.image_url = ""
+    await db.commit()
+    await db.refresh(product, ["subcategory"])
+    await db.refresh(product.subcategory, ["category"])
+    return product_to_response(product)

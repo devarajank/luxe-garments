@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,15 +22,29 @@ app.include_router(router)
 # Serve frontend static files
 STATIC_DIR = "/app/static"
 if os.path.exists(STATIC_DIR):
+    # Serve assets and other static files
+    app.mount("/assets", StaticFiles(directory=os.path.join(STATIC_DIR, "assets")), name="assets")
+
+    # Fallback: serve index.html for all non-API routes (SPA routing)
+    @app.get("/{path:path}")
+    async def serve_spa(path: str):
+        # Don't intercept health checks
+        if path == "health":
+            return {"status": "ok", "service": "gateway"}
+
+        file_path = os.path.join(STATIC_DIR, path)
+
+        # If it's a file that exists, serve it
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+
+        # Otherwise, serve index.html for React Router SPA
+        return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+
+    # Serve root
     @app.get("/")
     async def serve_index():
         return FileResponse(os.path.join(STATIC_DIR, "index.html"))
-
-    @app.get("/admin")
-    async def serve_admin():
-        return FileResponse(os.path.join(STATIC_DIR, "admin.html"))
-
-    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 @app.get("/health")
